@@ -1,0 +1,44 @@
+# Deny access to directory listings
+Options -Indexes
+
+# Block common bots and scanners by User-Agent
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block specific User-Agents (bots and scanners)
+    RewriteCond %{HTTP_USER_AGENT} ^.*(bot|crawler|spider|scanner|wget|curl|nikto|fuzzer|sqlmap|dirbuster|nmap).*$ [NC]
+    RewriteRule .* - [F,L]
+
+    # Deny access to sensitive file types
+    RewriteRule \.(ini|log|sh|sql|bak|inc|old|save|config|env|DS_Store)$ - [F,L]
+</IfModule>
+
+# Protect sensitive files and directories
+<FilesMatch "\.(htaccess|htpasswd|env|ini|log|sh|bak|sql)$">
+    Require all denied
+</FilesMatch>
+
+# Limit request methods to prevent malicious scanning
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_METHOD} !^(GET|POST|HEAD|OPTIONS|PUT)$ [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Restrict access to hidden files and directories (starting with .)
+<IfModule mod_rewrite.c>
+    RewriteRule (^|/)\. - [F,L]
+</IfModule>
+
+# Enable HTTP headers for security
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Enable mod_security if installed (optional)
+<IfModule mod_security.c>
+    SecFilterEngine On
+    SecFilterScanPOST On
+</IfModule>
+
